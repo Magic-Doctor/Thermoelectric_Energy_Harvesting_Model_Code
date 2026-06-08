@@ -1,0 +1,76 @@
+/PREP7
+BTOL,1e-7   ! Change the boolean operation tolerence
+x=0.05       ! The length of Model
+y=0.05       ! The width of Model
+L=0.024       ! The length of TEG
+W=0.024    ! The width of TEG
+ent1=0.2e-3    ! The thickness of Encapsulation
+int=0.2e-3    ! The thickness of Interface
+subt=1e-3  ! The thickness of Substrate
+TEGt=1.5e-3   ! The thickness of TEG
+a=1e-3   ! The length of heat source
+b=1e-3   ! The width of heat source
+ET,1,solid90
+mp,kxx,1,0.17    ! The thermal coefficient of Encapsulation/Substrate/Interface(PDMS)
+mp,kxx,2,1   ! The thermal coefficient of TEG (Bi2Te3)
+P=0.3  ! Heat power
+gT=0   ! Groud temperature
+BLC4,,,x,y,ent1+int+subt+TEGt
+BLC4,(x-L)/2,(y-L)/2,L,W,ent1+int+subt+TEGt  ! one TEG
+BLC4,(x-a)/2,(y-b)/2,a,b,ent1+int+subt+TEGt  ! one heater
+VOVLAP,all
+WPOFFS,,,subt
+VSBW,ALL
+WPOFFS,,,int
+VSBW,ALL
+WPOFFS,,,TEGt
+VSBW,ALL
+
+VSEL, U, VOLU, , 2
+VSEL, U, VOLU, , 7
+VSEL, U, VOLU, , 1
+VSEL, U, VOLU, , 4
+
+WPROTA,  ,90,, 
+WPROTA, , , 45
+VSBW,ALL
+WPROTA,,, 45
+WPOFFS,,,x
+WPROTA,,, -135
+VSBW,ALL
+
+*do,i,5,8
+LESIZE,i,,,20    ! Distribute the meshing number for Encapsulation and Substrate
+*enddo
+*do,i,17,20
+LESIZE,i,,,20    ! Distribute the meshing number for TEG
+*enddo
+*do,i,29,32
+LESIZE,i,,,20    ! Distribute the meshing number for heater
+*enddo
+LESIZE,142,,,20    
+LESIZE,145,,,20   
+
+
+VSEL,S,LOC,Z,int+subt+TEGt,ent1+int+subt+TEGt   ! Meshing Encapsulation
+VSWEEP,ALL
+VSEL, S, VOLU, , 49, 52  ! Meshing Encapsulation  
+VSWEEP,ALL
+MAT,2
+VSEL,S,VOLU,,29,32   ! Meshing TEG
+VSWEEP,ALL
+VSEL,S,VOLU,,2   ! Meshing TEG
+VSWEEP,ALL
+MAT,1
+VSEL,S,LOC,Z,0,int+subt   ! Meshing Interface and Substrate
+VSWEEP,ALL
+VSEL,ALL
+
+
+SFA,23,,HFLUX,P/(2*a*b)   ! Apply the heat flux on one heat source
+ASEL,S,LOC,Z,0
+DA,ALL,TEMP,gT          ! Apply ground temperature on bottom of Substrate
+ASEL,ALL
+
+/SOLU  
+SOLVE,ELFORM   ! Solve

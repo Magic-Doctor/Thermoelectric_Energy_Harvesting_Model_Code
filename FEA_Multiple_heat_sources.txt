@@ -1,0 +1,77 @@
+/PREP7
+BTOL,1e-7   ! Change the boolean operation tolerence
+x=0.05       ! The length of SUB and EN
+y=0.05       ! The width of SUB and EN
+ent1=0.2e-3    ! The thickness of EN
+ent2=0.2e-3    ! The thickness of EN
+subt=1e-3  ! The thickness of SUB
+TEGt=1.5e-3   ! The thickness of TEG
+a=1e-3   ! The length of LED
+b=1e-3   ! The width of LED
+m=3   ! The number of heater in x-direction
+n=3    ! The number of heater in y-direction
+d=4*a  ! The distance of each heater, 0.1a, 0.2a, 0.3a, 0.4a, 0.5a, 0.6a, 0.7a, 0.8a, 0.9a, a, ...... 2a
+ET,1,solid90
+mp,kxx,1,0.17    ! The thermal coefficient of EN
+mp,kxx,2,0.17   ! The thermal coefficien t of SUB
+mp,kxx,3,1   ! The thermal coefficient of TEG
+P=0.1  ! Heater power
+gT=0   ! Groud temperature
+
+
+BLC4,,,x,y,ent1+ent2+subt+TEGt
+!BLC4,x/2-5*a/2-3*d,y/2-5*b/2-3*d,5*a+6*d,5*b+6*d,ent1+ent2+subt+TEGt
+!VOVLAP,2,1
+!NUMCMP,VOLU
+
+*do,i,1,m
+*do,j,1,n
+BLC4,(x-a*m-d*(m-1))/2+(i-1)*(a+d),(y-b*n-d*(n-1))/2+(j-1)*(b+d),a,b,ent1+ent2+subt+TEGt  ! Iterative modeling for heaters
+*enddo
+*enddo
+VOVLAP,all
+
+WPOFFS,,,subt
+VSBW,ALL
+WPOFFS,,,ent2
+VSBW,ALL
+WPOFFS,,,TEGt
+VSBW,ALL
+NUMCMP,AREA
+
+
+*do,i,1,n*m
+! m=n=2, SFA 19
+! m=n=5, SFA 77
+! m=n=4, SFA 52
+! m=n=3, SFA 33
+SFA,33+(i-1)*9,,HFLUX,P/(2*a*b)   ! Apply the load of heat flux in n*m heaters	
+*enddo
+ASEL,S,LOC,Z,0
+DA,ALL,TEMP,gT          ! Apply ground temperature
+ASEL,ALL
+
+NUMCMP,	LINE
+*do,i,5,8
+LESIZE,i,,,10    ! Distribute the meshing number for EN and SUB
+*enddo
+*do,i,13,16
+LESIZE,i,,,10
+*enddo
+
+
+VSEL,S,LOC,Z,ent2+subt+TEGt,ent1+ent2+subt+TEGt   ! Meshing
+VSWEEP,ALL
+MAT,3
+VSEL,S,LOC,Z,ent2+subt,ent2+subt+TEGt   ! Meshing
+VSWEEP,ALL
+MAT,1
+VSEL,S,LOC,Z,subt,ent2+subt   ! Meshing
+VSWEEP,ALL
+MAT,2
+VSEL,S,LOC,Z,0,subt   ! Meshing
+VSWEEP,ALL
+VSEL,ALL
+
+/SOLU  
+SOLVE,ELFORM
